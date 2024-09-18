@@ -1,0 +1,1174 @@
+#include "ChanceCard.h"
+#include "CommunityChestCard.h"
+#include "Player.h"
+#include "Game.h"
+#include "Board.h"
+#include "Card.h"
+#include <iostream>
+
+void AdvanceToCard::execute(Player& player, Game& game) {
+    int currentPosition = player.getPosition();
+    int newPosition = game.getBoard().getSquareIndexByName(destination);
+    
+    if (newPosition == -1) {
+        std::cout << "Error: Destination square '" << destination << "' not found." << std::endl;
+        return;
+    }
+    
+    if (newPosition < currentPosition) {
+        std::cout << player.getName() << " passes GO and collects $200" << std::endl;
+        player.addMoney(200);
+    }
+    player.moveToPosition(newPosition);
+    std::cout << player.getName() << " advances to " << destination << std::endl;
+    
+    // Land on the new square
+    game.getBoard().getSquare(newPosition)->landedOn(player);
+}
+
+void CollectCard::execute(Player& player, Game& game) {
+    (void)game;
+    player.addMoney(amount);
+    std::cout << player.getName() << " collects $" << amount << std::endl;
+}
+
+void PayCard::execute(Player& player, Game& game) {
+    (void)game;
+    player.removeMoney(amount);
+    std::cout << player.getName() << " pays $" << amount << std::endl;
+}
+
+void GetOutOfJailCard::execute(Player& player, Game& game) {
+    (void)game;
+    player.addGetOutOfJailCard();
+    std::cout << player.getName() << " receives a Get Out of Jail Free card" << std::endl;
+}
+
+void GoToJailCard::execute(Player& player, Game& game) {
+    game.sendPlayerToJail(player);
+}
+
+// void CollectFromEachPlayerCard::execute(Player& player, Game& game) {
+//     int totalCollected = 0;
+//     for (const auto& otherPlayer : game.getPlayers()) {
+//         if (otherPlayer.get() != &player) {
+//             otherPlayer->removeMoney(amount);
+//             totalCollected += amount;
+//         }
+//     }
+//     player.addMoney(totalCollected);
+//     std::cout << player.getName() << " collects $" << amount << " from each player, totaling $" << totalCollected << std::endl;
+// }
+
+// Implement other card types as needed#ifndef CARD_H
+#define CARD_H
+
+#include <string>
+
+class Game;
+class Player;
+
+class Card {
+protected:
+    std::string description;
+
+public:
+    Card(const std::string& desc) : description(desc) {}
+    virtual ~Card() = default;
+
+    virtual void execute(Player& player, Game& game) = 0;
+    std::string getDescription() const { return description; }
+};
+
+#endif // CARD_H#ifndef CHANCE_CARD_H
+#define CHANCE_CARD_H
+
+#include "Card.h"
+
+class ChanceCard : public Card {
+public:
+    ChanceCard(const std::string& desc) : Card(desc) {}
+    virtual void execute(Player& player, Game& game) override = 0;
+};
+
+// Specific Chance card types
+class AdvanceToCard : public ChanceCard {
+private:
+    std::string destination;
+public:
+    AdvanceToCard(const std::string& dest) : ChanceCard("Advance to " + dest), destination(dest) {}
+    void execute(Player& player, Game& game) override;
+};
+
+class CollectCard : public ChanceCard {
+private:
+    int amount;
+public:
+    CollectCard(int amt, const std::string& reason) : ChanceCard(reason + ". Collect $" + std::to_string(amt)), amount(amt) {}
+    void execute(Player& player, Game& game) override;
+};
+
+class PayCard : public ChanceCard {
+private:
+    int amount;
+public:
+    PayCard(int amt, const std::string& reason) : ChanceCard(reason + ". Pay $" + std::to_string(amt)), amount(amt) {}
+    void execute(Player& player, Game& game) override;
+};
+
+class GetOutOfJailCard : public ChanceCard {
+public:
+    GetOutOfJailCard() : ChanceCard("Get Out of Jail Free") {}
+    void execute(Player& player, Game& game) override;
+};
+
+class GoToJailCard : public ChanceCard {
+public:
+    GoToJailCard() : ChanceCard("Go to Jail. Go directly to Jail, do not pass Go, do not collect $200") {}
+    void execute(Player& player, Game& game) override;
+};
+
+// Add more specific card types as needed
+
+#endif // CHANCE_CARD_H#include "ChanceSquare.h"
+#include "Player.h"
+#include "Game.h"
+#include <iostream>
+
+void ChanceSquare::landedOn(Player& player) {
+    std::cout << player.getName() << " landed on Chance" << std::endl;
+    Game* game = player.getGame();
+    if (game) {
+        game->drawChanceCard(player);
+    } else {
+        std::cerr << "Error: Game pointer is null" << std::endl;
+    }
+}#ifndef CHANCE_SQUARE_H
+#define CHANCE_SQUARE_H
+
+#include "Square.h"
+
+class ChanceSquare : public Square {
+public:
+    ChanceSquare(const std::string& name) : Square(name) {}
+    void landedOn(Player& player) override;
+};
+
+#endif // CHANCE_SQUARE_H#include "CommunityChestCard.h"
+#include <iostream>
+
+CollectFromEachPlayerCard::CollectFromEachPlayerCard(int amount, const std::string& desc)
+    : Card(desc), amount(amount) {}
+
+void CollectFromEachPlayerCard::execute(Player& player, Game& game) {
+    std::cout << player.getName() << " " << getDescription() << std::endl;
+    int totalCollected = 0;
+    for (const auto& otherPlayer : game.getPlayers()) {
+        if (otherPlayer.get() != &player) {
+            if (otherPlayer->getMoney() >= amount) {
+                otherPlayer->removeMoney(amount);
+                player.addMoney(amount);
+                totalCollected += amount;
+                std::cout << otherPlayer->getName() << " pays $" << amount << " to " << player.getName() << std::endl;
+            } else {
+                std::cout << otherPlayer->getName() << " is bankrupt and cannot pay." << std::endl;
+                game.transferAssets(*otherPlayer, player);
+                game.removePlayer(otherPlayer.get());
+            }
+        }
+    }
+    std::cout << player.getName() << " collected a total of $" << totalCollected << std::endl;
+}// In CommunityChestCard.h
+#ifndef COMMUNITY_CHEST_CARD_H
+#define COMMUNITY_CHEST_CARD_H
+
+#include "Card.h"
+#include "Player.h"
+#include "Game.h"
+
+class CollectFromEachPlayerCard : public Card {
+public:
+    CollectFromEachPlayerCard(int amount, const std::string& desc);
+    void execute(Player& player, Game& game) override;
+
+private:
+    int amount;
+};
+
+#endif // COMMUNITY_CHEST_CARD_H
+
+#include "CommunityChestSquare.h"
+#include "Player.h"
+#include "Game.h"
+#include <iostream>
+
+void CommunityChestSquare::landedOn(Player& player) {
+    std::cout << player.getName() << " landed on Community Chest" << std::endl;
+    Game* game = player.getGame();
+    if (game) {
+        game->drawCommunityChestCard(player);
+    } else {
+        std::cerr << "Error: Game pointer is null" << std::endl;
+    }
+}#ifndef COMMUNITY_CHEST_SQUARE_H
+#define COMMUNITY_CHEST_SQUARE_H
+
+#include "Square.h"
+
+class CommunityChestSquare : public Square {
+public:
+    CommunityChestSquare(const std::string& name) : Square(name) {}
+    void landedOn(Player& player) override;
+};
+
+#endif // COMMUNITY_CHEST_SQUARE_H
+
+#include "Game.h"
+#include "ChanceCard.h"
+#include "CommunityChestCard.h"
+#include "Property.h"
+#include <algorithm>
+#include <random>
+#include <iostream>
+
+Game::Game(int numPlayers) : currentPlayerIndex(0), gameOver(false) {
+    for (int i = 0; i < numPlayers; ++i) {
+        players.push_back(std::make_unique<Player>("Player " + std::to_string(i + 1), &board, this));
+    }
+    initializeCards();
+}
+
+void Game::initializeCards() {
+    // Initialize Chance cards
+    chanceCards.push_back(std::make_unique<AdvanceToCard>("Boardwalk"));
+    chanceCards.push_back(std::make_unique<AdvanceToCard>("Go"));
+    chanceCards.push_back(std::make_unique<AdvanceToCard>("Illinois Avenue"));
+    chanceCards.push_back(std::make_unique<AdvanceToCard>("St. Charles Place"));
+    chanceCards.push_back(std::make_unique<CollectCard>(50, "Bank pays you dividend"));
+    chanceCards.push_back(std::make_unique<GetOutOfJailCard>());
+    chanceCards.push_back(std::make_unique<GoToJailCard>());
+    chanceCards.push_back(std::make_unique<PayCard>(15, "Speeding fine"));
+
+    // Initialize Community Chest cards
+    communityChestCards.push_back(std::make_unique<AdvanceToCard>("Go"));
+    communityChestCards.push_back(std::make_unique<CollectCard>(200, "Bank error in your favor"));
+    communityChestCards.push_back(std::make_unique<PayCard>(50, "Doctor's fee"));
+    communityChestCards.push_back(std::make_unique<CollectCard>(50, "From sale of stock"));
+    communityChestCards.push_back(std::make_unique<GetOutOfJailCard>());
+    communityChestCards.push_back(std::make_unique<GoToJailCard>());
+    communityChestCards.push_back(std::make_unique<CollectFromEachPlayerCard>(10, "It is your birthday"));
+
+    // Shuffle the cards
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(chanceCards.begin(), chanceCards.end(), g);
+    std::shuffle(communityChestCards.begin(), communityChestCards.end(), g);
+}
+
+void Game::startTurn() {
+    std::cout << "new turn!" << std::endl;
+    Player& player = *players[currentPlayerIndex];
+    std::cout << player.getName() << "'s turn!" << std::endl;
+}
+
+void Game::endTurn(Player& player) {
+    checkBankruptcy(player); 
+
+    //std::cout << player.getName() << " ends turn!" << std::endl;
+     // Move to the next player for the next turn
+    currentPlayerIndex++;
+    if (static_cast<size_t>(currentPlayerIndex) >= players.size()) {
+        currentPlayerIndex = 0;
+    }
+}
+
+std::vector<int> Game::roll(Player& player){
+        int roll1 = dice.roll();
+        int roll2 = dice.roll();
+        lastRoll = roll1 + roll2;
+        return std::vector<int>{roll1, roll2};
+}
+
+void Game::processPlayerTurn(Player& player) {
+        // Move the player
+        int oldPosition = player.getPosition();
+        player.moveBy(getLastRoll());
+        int newPosition = player.getPosition();
+
+        // Check if the player passed GO
+        if (newPosition < oldPosition) {
+            player.addMoney(200);
+            std::cout << player.getName() << " passed GO and collected $200!" << std::endl;
+        }
+
+        // Land on a new square
+        Square* currentSquare = board.getSquare(newPosition);
+        if (currentSquare) {
+            currentSquare->landedOn(player);
+        } else {
+            std::cerr << "Error: Invalid square position!" << std::endl;
+        }
+}
+
+void Game::checkConsecutiveDoubles(Player& player, int roll1, int roll2) {
+    static int consecutiveDoubles = 0;
+
+    if (dice.isDouble(roll1, roll2)) {
+        consecutiveDoubles++;
+        if (consecutiveDoubles == 3) {
+            std::cout << player.getName() << " rolled three consecutive doubles and is being sent to jail!" << std::endl;
+            sendPlayerToJail(player);
+            consecutiveDoubles = 0;
+        }
+    } else {
+        consecutiveDoubles = 0;
+    }
+}
+
+void Game::sendPlayerToJail(Player& player) {
+    std::cout << player.getName() << " is being sent to jail!" << std::endl;
+    player.goToJail();
+    player.moveToPosition(10);  // Assuming Jail is at position 10
+}
+
+void Game::checkBankruptcy(Player& player) {
+    if (player.getMoney() < 0) {
+        std::cout << player.getName() << " is bankrupt!" << std::endl;
+
+        Player* creditor = findCreditor(player);
+        if (creditor) {
+            std::cout << player.getName() << " transfers all assets to " << creditor->getName() << std::endl;
+            transferAssets(player, *creditor);
+        } else {
+            std::cout << player.getName() << " is bankrupt due to bank fees. All properties are returned to the bank." << std::endl;
+            returnPropertiesToBank(player);
+        }
+
+        removePlayer(&player);
+    }
+}
+
+bool Game::isGameOver() const {
+    return gameOver || players.size() == 1 || std::any_of(players.begin(), players.end(),
+        [](const auto& player) { return player->getMoney() >= 4000; });
+}
+
+void Game::play() {
+    // while (!isGameOver()) {
+    //     startTurn();
+    //     endTurn();
+    // }
+    // // Announce winner
+}
+
+Player* Game::findCreditor(const Player& bankruptPlayer) {
+    for (const auto& p : players) {
+        if (p.get() != &bankruptPlayer && p->ownsPropertyLandedOn(bankruptPlayer)) {
+            return p.get();
+        }
+    }
+    return nullptr;
+}
+
+void Game::transferAssets(Player& fromPlayer, Player& toPlayer) {
+    int remainingMoney = fromPlayer.getMoney();
+    if (remainingMoney > 0) {
+        toPlayer.addMoney(remainingMoney);
+    }
+
+    const auto& properties = fromPlayer.getProperties();
+    for (auto* property : properties) {
+        property->setOwner(&toPlayer);
+        toPlayer.addProperty(property);
+    }
+    fromPlayer.clearProperties();
+}
+
+void Game::returnPropertiesToBank(Player& player) {
+    const auto& properties = player.getProperties();
+    for (auto* property : properties) {
+        property->setOwner(nullptr);
+    }
+    player.clearProperties();
+}
+
+void Game::removePlayer(Player* playerToRemove) {
+    auto it = std::find_if(players.begin(), players.end(),
+                           [playerToRemove](const std::unique_ptr<Player>& p) { return p.get() == playerToRemove; });
+
+    if (it != players.end()) {
+        std::string name = playerToRemove->getName();
+        int index = std::distance(players.begin(), it);
+        players.erase(it);
+
+        if (currentPlayerIndex >= index) {
+            currentPlayerIndex--;
+        }
+        std::cout << name << " has been removed from the game." << std::endl;
+        if (players.size() == 1) {
+            std::cout << "Game over! " << players[0]->getName() << " wins!" << std::endl;
+            gameOver = true;
+        }
+    }
+}
+
+void Game::buildHouse(Player& player) {
+    std::vector<Street*> buildableStreets;
+    for (auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street && street->canBuildHouse(player)) {
+            buildableStreets.push_back(street);
+        }
+    }
+
+    if (buildableStreets.empty()) {
+        std::cout << "You can't build any houses at the moment.\n";
+        return;
+    }
+
+    std::cout << "Select a street to build a house on:\n";
+    for (size_t i = 0; i < buildableStreets.size(); ++i) {
+        std::cout << i + 1 << ". " << buildableStreets[i]->getName() 
+                  << " (Current houses: " << buildableStreets[i]->getNumHouses() << ")\n";
+    }
+
+    char cChoice;
+    std::cin >> cChoice;
+    size_t choice = cChoice - '0';
+    if (choice > 0 && choice <= buildableStreets.size()) {
+        Street* selectedStreet = buildableStreets[choice - 1];
+        try {
+            selectedStreet->buildHouse(player);
+            std::cout << "House built on " << selectedStreet->getName() << "\n";
+        } catch (const std::runtime_error& e) {
+            std::cout << "Error: " << e.what() << "\n";
+        }
+    } else {
+        std::cout << "Invalid choice.\n";
+    }
+}
+
+void Game::buildHotel(Player& player) {
+    std::vector<Street*> buildableStreets;
+    for (auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street && street->canBuildHotel(player)) {
+            buildableStreets.push_back(street);
+        }
+    }
+
+    if (buildableStreets.empty()) {
+        std::cout << "You can't build any hotels at the moment.\n";
+        return;
+    }
+
+    std::cout << "Select a street to build a hotel on:\n";
+    for (size_t i = 0; i < buildableStreets.size(); ++i) {
+        std::cout << i + 1 << ". " << buildableStreets[i]->getName() << "\n";
+    }
+
+    char cChoice;
+    std::cin >> cChoice;
+    size_t choice = cChoice - '0';
+    if (choice > 0 && choice <= buildableStreets.size()) {
+        Street* selectedStreet = buildableStreets[choice - 1];
+        try {
+            selectedStreet->buildHotel(player);
+            std::cout << "Hotel built on " << selectedStreet->getName() << "\n";
+        } catch (const std::runtime_error& e) {
+            std::cout << "Error: " << e.what() << "\n";
+        }
+    } else {
+        std::cout << "Invalid choice.\n";
+    }
+}
+
+bool Game::canBuild(Player& player) {
+    for (auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street && (street->canBuildHouse(player) || street->canBuildHotel(player))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::vector<int>> Game::getPlayerPositions() const {
+    std::vector<std::vector<int>> positions(40);
+    for (int j = 0; j < 40; j++){
+        for (int i = 0; i < players.size(); ++i) {
+            if(players[i]->getPosition() == j)
+                positions[j].push_back(players[i]->getName().back()-'0');
+        }
+    }
+
+    return positions;
+}
+
+const Player& Game::getCurrentPlayer() const {
+    return *players[currentPlayerIndex];
+}
+
+void Game::drawChanceCard(Player& player) {
+    if (chanceCards.empty()) {
+        std::cout << "Chance card deck is empty. Reshuffling..." << std::endl;
+        initializeCards();
+    }
+    
+    std::unique_ptr<Card> drawnCard = std::move(chanceCards.back());
+    chanceCards.pop_back();
+    
+    std::cout << player.getName() << " draws a Chance card: " << drawnCard->getDescription() << std::endl;
+    drawnCard->execute(player, *this);
+}
+
+void Game::drawCommunityChestCard(Player& player) {
+    if (communityChestCards.empty()) {
+        std::cout << "Community Chest card deck is empty. Reshuffling..." << std::endl;
+        initializeCards();
+    }
+    
+    std::unique_ptr<Card> drawnCard = std::move(communityChestCards.back());
+    communityChestCards.pop_back();
+    
+    std::cout << player.getName() << " draws a Community Chest card: " << drawnCard->getDescription() << std::endl;
+    drawnCard->execute(player, *this);
+}
+#ifndef GAME_H
+#define GAME_H
+
+#include <vector>
+#include <memory>
+#include "Player.h"
+#include "Board.h"
+#include "Dice.h"
+#include "Card.h"
+
+class Game {
+private:
+    std::vector<std::unique_ptr<Player>> players;
+    Board board;
+    Dice dice;
+    int currentPlayerIndex;
+    bool gameOver;
+    std::vector<std::unique_ptr<Card>> chanceCards;
+    std::vector<std::unique_ptr<Card>> communityChestCards;
+    int lastRoll;
+
+    void initializeCards();
+    void checkBankruptcy(Player& player);
+    void removePlayer(int playerIndex);
+    void returnPropertiesToBank(Player& player);
+    Player* findCreditor(const Player& bankruptPlayer);
+
+public:
+    Game(int numPlayers);
+    void play();
+    bool isGameOver() const;
+    void startTurn();
+    void endTurn(Player& player);
+    void processPlayerTurn(Player& player);
+    void sendPlayerToJail(Player& player);
+    void drawChanceCard(Player& player);
+    void drawCommunityChestCard(Player& player);
+    void removePlayer(Player* playerToRemove);
+    void transferAssets(Player& fromPlayer, Player& toPlayer);
+    void manageProperties(Player& player);
+    void displayPlayerProperties(const Player& player);
+    void buildHouse(Player& player);
+    void buildHotel(Player& player);
+    bool canBuild(Player& player);
+    std::vector<std::vector<int>> getPlayerPositions() const;
+    const Player& getCurrentPlayer() const;
+    const Board& getBoard() const { return board; }
+    const std::vector<std::unique_ptr<Player>>& getPlayers() const { return players; }
+    int getLastRoll() const { return lastRoll; }
+    std::vector<int> roll(Player& player);
+    void checkConsecutiveDoubles(Player& player, int roll1, int roll2);
+};
+
+#endif  // GAME_H
+#include "gamehandler.h"
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QObject>
+#include <QApplication>
+#include <QTimer>
+
+// Define sqColors as a vector of QColor objects
+std::vector<QColor> sqColors = {
+    QColor(0, 0, 255),   // Blue
+    QColor(255, 0, 0),   // Red
+    QColor(0, 255, 0),   // Green
+    QColor(255, 255, 0), // Yellow
+    QColor(0, 255, 255), // Cyan
+    QColor(255, 0, 255), // Magenta
+    QColor(128, 0, 128), // Purple
+    QColor(255, 165, 0),  // Orange
+    QColor(150, 150, 150)  // Orange
+};
+std::vector<std::string> nameColors = {
+        "blue", "yellow", "cyan",
+        "magenta", "gray", "darkGreen", "darkRed","red"
+};
+
+GameHandler::GameHandler() 
+    : customWidget(new CustomWidget()),
+      squareTitles(std::vector<std::string>{""}),
+      squareLetters(NUM_SQUARES, std::vector<int>{-1, 0})  // Initialize squareLetters
+{
+    QWidget* window = new QWidget;
+    window->setWindowTitle("Monopoly Game");
+    QVBoxLayout* mainLayout = new QVBoxLayout(window);
+    mainLayout->addWidget(customWidget);
+
+    window->setLayout(mainLayout);
+    window->resize(1000, 600);
+    window->show();
+}
+
+void GameHandler::setupGame(const std::vector<int>& colors, const std::vector<std::string>& titles) {
+    squareTitles = titles;
+    QStringList qTitles;
+    for (const auto& title : titles) {
+        qTitles << QString::fromStdString(title);
+    }
+
+    QMap<int, QColor> squareColors;
+    for (int i = 0; i < static_cast<int>(colors.size()); ++i) {
+        squareColors[i] = sqColors[colors[i]];
+    }
+
+    customWidget->setSquareColors(squareColors);
+    customWidget->setTitles(qTitles);
+
+    std::vector<std::vector<int>> defaultLetters(40, std::vector<int>{-1, 0});
+    //updateLetters(squareLetters);
+
+    QApplication::processEvents();
+}
+
+void GameHandler::updatePlayerPositions(const std::vector<std::vector<int>>& playerPositions) {
+    QMap<int, QList<int>> qtPlayerPositions;
+    for (int i = 0; i < static_cast<int>(playerPositions.size()); ++i) {
+        qtPlayerPositions[i] = QList<int>::fromVector(QVector<int>::fromStdVector(playerPositions[i]));
+    }
+
+    customWidget->updatePlayerPositions(qtPlayerPositions);
+    QApplication::processEvents();
+}
+
+void GameHandler::updatePlayerDetails(Player& currentPlayer) {
+    const std::string& name = currentPlayer.getName();
+    int playerNum = currentPlayer.getName().back() - '1';
+    const std::string& color = nameColors[playerNum];
+    int money = currentPlayer.getMoney();
+    int cards = currentPlayer.getGetOutOfJailCards();
+    customWidget->setPlayerDetails(
+        QString::fromStdString(name),
+        QString::fromStdString(color),
+        money,
+        cards
+    );    
+    QApplication::processEvents();
+}
+
+void GameHandler::updateLetters(const std::vector<std::vector<int>>& letters) {
+
+    
+    squareLetters.resize(40, std::vector<int>{-1, 0});
+    for (size_t i = 0; i < letters.size() && i < squareLetters.size(); ++i) {
+        if (letters[i].size() >= 2) {
+            squareLetters[i] = std::vector<int>{letters[i][0], letters[i][1]};
+        }
+    }
+    
+    QMap<int, QList<int>> qtLetters;
+    for (int i = 0; i < static_cast<int>(squareLetters.size()); ++i) {
+        qtLetters[i] = QList<int>{squareLetters[i][0], squareLetters[i][1]};
+    }
+    customWidget->setSquareLetters(qtLetters);
+}
+
+void GameHandler::updateLetter(Player& player) {
+    for (const auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street) {  // Check if the property is a Street
+            std::string name = street->getName();
+            for (size_t i = 0; i < squareTitles.size() && i < NUM_SQUARES; i++) {
+                if (squareTitles[i] == name) {
+                    int playerNum = player.getName().back() - '1';
+                    if (street->getHasHotel()) {
+                        squareLetters[i] = std::vector<int>{playerNum, 5};
+                    } else {
+                        squareLetters[i] = std::vector<int>{playerNum, street->getNumHouses()};
+                    }
+                    break;  // We found the matching square, no need to continue the inner loop
+                }
+            }
+        }
+    }
+
+    // Update the widget with the new squareLetters
+    QMap<int, QList<int>> qtLetters;
+    for (int i = 0; i < NUM_SQUARES; ++i) {
+        qtLetters[i] = QList<int>{squareLetters[i][0], squareLetters[i][1]};
+    }
+    customWidget->setSquareLetters(qtLetters);
+}
+
+std::string GameHandler::askQuestion(const std::vector<std::string>& options) {
+    QDialog dialog;
+    dialog.setWindowTitle("Player Decision");
+
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    
+    QLabel* label = new QLabel("Please select an option:");
+    layout->addWidget(label);
+
+    QComboBox* questionComboBox = new QComboBox;
+    for (const auto& option : options) {
+        questionComboBox->addItem(QString::fromStdString(option));
+    }
+    layout->addWidget(questionComboBox);
+
+    QPushButton* submitButton = new QPushButton("Submit");
+    layout->addWidget(submitButton);
+
+    std::string selectedOption;
+
+    QObject::connect(submitButton, &QPushButton::clicked, [&]() {
+        selectedOption = questionComboBox->currentText().toStdString();
+        dialog.accept();
+    });
+
+    dialog.exec();
+    return selectedOption;
+}
+
+void GameHandler::popup(const std::string& text) {
+    QDialog dialog;
+    dialog.setWindowTitle("Player Decision");
+
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    
+    QLabel* label = new QLabel(QString::fromStdString(text));
+    layout->addWidget(label);
+
+
+    QPushButton* submitButton = new QPushButton("OK");
+    layout->addWidget(submitButton);
+
+    std::string selectedOption;
+
+    QObject::connect(submitButton, &QPushButton::clicked, [&]() {
+        dialog.accept();
+    });
+
+    dialog.exec();
+}
+
+void GameHandler::buyProperty(Game& game) {
+    Player& player = const_cast<Player&>(game.getCurrentPlayer()); // Remove const
+    const Square* landedSquare = game.getBoard().getSquare(player.getPosition());
+    Property* property = dynamic_cast<Property*>(const_cast<Square*>(landedSquare));
+    
+    if (property && !property->getOwner()) {
+        std::string prompt = "Wanna buy " + property->getName() + " for $" + std::to_string(property->getPrice()) + "?";
+        std::vector<std::string> options{prompt, "No, thanks"};
+        std::string choice = askQuestion(options);
+        
+        if (choice == options[0]) {
+            if (player.getMoney() >= property->getPrice()) {
+                player.removeMoney(property->getPrice());
+                property->setOwner(&player);
+                player.buyProperty(property);
+                std::string answer = player.getName() + " bought " + property->getName() + " for $" + std::to_string(property->getPrice());
+                popup(answer);
+            } else {
+                popup(player.getName() + " doesn't have enough money to buy.");
+            }
+        }
+    }
+}
+
+void GameHandler::buildHouse(Player& player) {
+    std::vector<Street*> buildableStreets;
+    for (auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street && street->canBuildHouse(player)) {
+            buildableStreets.push_back(street);
+        }
+    }
+
+    if (buildableStreets.empty()) {
+        popup("You can't build any houses at the moment.");
+        return;
+    }    
+    std::vector<std::string> options;
+    for (size_t i = 0; i < buildableStreets.size(); ++i) {
+        options.push_back( buildableStreets[i]->getName());
+    }
+
+    std::string choice = askQuestion(options);       
+    
+    for (size_t i = 0; i < buildableStreets.size(); ++i) {
+        if(buildableStreets[i]->getName() == choice){
+            Street* selectedStreet = buildableStreets[i];
+            try {
+                selectedStreet->buildHouse(player);
+                popup("House built on " + selectedStreet->getName());
+            } catch (const std::runtime_error& e) {
+                std::string err(e.what());
+                popup("Error: " + err);
+            } 
+            return;
+        }
+    }
+    popup("Invalid choice.\n");
+}
+
+void GameHandler::buildHotel(Player& player) {
+    std::vector<Street*> buildableStreets;
+    for (auto& property : player.getProperties()) {
+        Street* street = dynamic_cast<Street*>(property);
+        if (street && street->canBuildHotel(player)) {
+            buildableStreets.push_back(street);
+        }
+    }
+
+    if (buildableStreets.empty()) {
+        popup("You can't build any hotels at the moment.");
+        return;
+    }    
+
+    std::vector<std::string> options;
+    for (const auto& street : buildableStreets) {
+        options.push_back(street->getName() + " (Houses: " + std::to_string(street->getNumHouses()) + ")");
+    }
+
+    std::string choice = askQuestion(options);
+
+    for (auto* street : buildableStreets) {
+        if (street->getName() == choice.substr(0, choice.find(" (Houses:"))) {
+            try {
+                street->buildHotel(player);
+                popup("Hotel built on " + street->getName());
+            } catch (const std::runtime_error& e) {
+                popup("Error: " + std::string(e.what()));
+            }
+            return;
+        }
+    }
+    
+    popup("Invalid choice.");
+}
+
+void GameHandler::build(Game& game){
+
+    Player& currentPlayer = const_cast<Player&>(game.getCurrentPlayer());
+    if(game.getBoard().getSquare(currentPlayer.getPosition())->getName() == "Free Parking"){
+        popup("Free Parking!");
+        return;
+    } 
+    while(game.canBuild(currentPlayer)) {
+            std::string answer = askQuestion({"Pass","Build House", "Build Hotel"});
+            if (answer == "Build House") {
+                buildHouse(currentPlayer);
+            } else if (answer == "Build Hotel") {
+                buildHotel(currentPlayer);
+            }else if (answer == "Pass") break;
+            updateLetter(currentPlayer);
+    }
+}
+
+void GameHandler::jailTurn(Player& player) {
+    if (player.useGetOutOfJailCard()) {
+        popup(player.getName() + " used a Get Out of Jail Free card!");
+        player.releaseFromJail();
+    } else {
+        std::string answer = askQuestion({"Wanna pay $50 to get out?", "Nah, I'm good"});
+
+        if (answer == "Wanna pay $50 to get out?") {
+            player.removeMoney(50);
+            player.releaseFromJail();
+        } else {
+            player.incrementTurnsInJail();
+            if (player.getTurnsInJail() >= 3) {
+                popup(player.getName() + " has been in jail for 3 turns and must pay $50.");
+                player.removeMoney(50);
+                player.releaseFromJail();
+            } 
+        }
+    }
+}
+
+void GameHandler::updateAllPlayersProperties(const Game& game) {
+    QMap<QString, QStringList> allProperties;
+    
+    for (const auto& player : game.getPlayers()) {
+        QStringList playerProperties;
+        for (const auto& property : player->getProperties()) {
+            playerProperties.append(QString::fromStdString(property->getName()));
+        }
+        allProperties[QString::fromStdString(player->getName())] = playerProperties;
+    }
+
+    customWidget->setAllPlayersProperties(allProperties);
+}
+
+void GameHandler::playTurn(Game& game) {
+    do {
+        game.startTurn();
+
+        Player& currentPlayer = const_cast<Player&>(game.getCurrentPlayer());
+        updatePlayerDetails(currentPlayer);
+        std::vector<int> dice = game.roll(currentPlayer);
+        int roll1 = dice[0];
+        int roll2 = dice[1];
+        std::string rollmsg(currentPlayer.getName() + " rolled " + std::to_string(roll1) + " and " + std::to_string(roll2));
+
+        game.checkConsecutiveDoubles(currentPlayer, roll1, roll2);
+
+        if (currentPlayer.isInJail()) {
+            jailTurn(currentPlayer);
+            popup(rollmsg);
+        } else {
+            rollmsg += ".\n" + currentPlayer.getName() + " is mooving to: " + game.getBoard().getSquare(currentPlayer.getPosition()+roll1+roll2)->getName();
+            popup(rollmsg);
+            game.processPlayerTurn(currentPlayer);
+        }
+
+        int playerNum = currentPlayer.getName().back() - '1';
+        updatePlayerDetails(currentPlayer);
+        updatePlayerPositions(game.getPlayerPositions());
+        updateAllPlayersProperties(game);
+        buyProperty(game);
+        build(game);
+
+        if (roll1 != roll2 || currentPlayer.isInJail()) {
+            game.endTurn(currentPlayer);
+        }else if (roll1 == roll2 && !currentPlayer.isInJail()){
+            popup("you have one more turn!");
+        }
+
+        // Check for game over after each turn
+        if (game.isGameOver()) {
+            break;
+        }
+    } while (true);
+
+    // Game is over, show popup and close the program
+    QDialog gameOverDialog;
+    gameOverDialog.setWindowTitle("Game Over");
+    QVBoxLayout* layout = new QVBoxLayout(&gameOverDialog);
+    QLabel* label = new QLabel("Game Over!");
+    layout->addWidget(label);
+    QPushButton* okButton = new QPushButton("OK");
+    layout->addWidget(okButton);
+    QObject::connect(okButton, &QPushButton::clicked, [&]() {
+        gameOverDialog.accept();
+        std::exit(0); // Forcefully exit the application
+    });
+    gameOverDialog.exec(); // Make sure to call exec() to show the dialog
+}#ifndef GAMEHANDLER_H
+#define GAMEHANDLER_H
+
+#include "customwidget.h"
+#include <vector>
+#include <string>
+#include <QColor>
+#include <QString>
+#include <QDialog>
+#include "Game.h"
+
+class GameHandler {
+public:
+    static const int NUM_SQUARES = 40;  
+    GameHandler();
+    void setupGame(const std::vector<int>& colors, const std::vector<std::string>& titles);
+    void updatePlayerPositions(const std::vector<std::vector<int>>& playerPositions);
+    void updatePlayerDetails(Player& player);
+    void updateLetters(const std::vector<std::vector<int>>& letters);
+    void updateLetter(Player& player);
+    std::string askQuestion(const std::vector<std::string>& options);
+    void playTurn(Game& game);
+    void build(Game& game);
+    void buildHouse(Player& player);
+    void buildHotel(Player& player);
+    void popup(const std::string& text);
+    void buyProperty(Game& game);
+    void jailTurn(Player& player);
+    void updateAllPlayersProperties(const Game& game);
+
+private:
+    CustomWidget* customWidget;
+    std::vector<std::vector<int>> squareLetters;
+    std::vector<std::string> squareTitles;  // Changed from reference to regular member
+};
+
+#endif  // GAMEHANDLER_H
+
+#include "Player.h"
+#include "Property.h"
+#include "Board.h"
+#include "Game.h"
+#include <algorithm>
+
+Player::Player(const std::string& name, const Board* board, Game* game) 
+    : name(name), money(1500), position(0), inJail(false), turnsInJail(0), getOutOfJailCards(0), board(board), game(game) {}
+
+Player::~Player() {
+    for (Property* property : properties) {
+        property->setOwner(nullptr);
+    }
+}
+
+void Player::moveBy(int spaces) {
+    position = board->normalizePosition(position + spaces);
+}
+
+void Player::moveToPosition(int newPosition) {
+    position = board->normalizePosition(newPosition);
+}
+
+int Player::getPosition() const {
+    return board->normalizePosition(position);
+}
+
+void Player::addMoney(int amount) {
+    money += amount;
+}
+
+void Player::removeMoney(int amount) {
+    money -= amount;
+}
+
+void Player::buyProperty(Property* property) {
+    properties.push_back(property);
+    property->setOwner(this);
+}
+
+bool Player::ownsProperty(const Property* property) const {
+    return std::find(properties.begin(), properties.end(), property) != properties.end();
+}
+
+void Player::goToJail() {
+    inJail = true;
+    turnsInJail = 0;
+}
+
+bool Player::isInJail() const {
+    return inJail;
+}
+
+void Player::releaseFromJail() {
+    inJail = false;
+    turnsInJail = 0;
+}
+
+int Player::getMoney() const {
+    return money;
+}
+
+const std::string& Player::getName() const {
+    return name;
+}
+
+void Player::addGetOutOfJailCard() {
+    getOutOfJailCards++;
+}
+
+bool Player::useGetOutOfJailCard() {
+    if (getOutOfJailCards > 0) {
+        getOutOfJailCards--;
+        return true;
+    }
+    return false;
+}
+
+void Player::incrementTurnsInJail() {
+    turnsInJail++;
+}
+
+int Player::getTurnsInJail() const {
+    return turnsInJail;
+}
+
+const std::vector<Property*>& Player::getProperties() const {
+    return properties;
+}
+
+void Player::clearProperties() {
+    properties.clear();
+}
+
+void Player::addProperty(Property* property) {
+    properties.push_back(property);
+}
+
+int Player::getGetOutOfJailCards() const {
+    return getOutOfJailCards;
+}
+
+bool Player::ownsPropertyLandedOn(const Player& otherPlayer) const {
+    const Square* landedSquare = board->getSquare(otherPlayer.getPosition());
+    const Property* landedProperty = dynamic_cast<const Property*>(landedSquare);
+    
+    if (landedProperty && landedProperty->getOwner() == this) {
+        return true;
+    }
+    return false;
+}#ifndef PLAYER_H
+#define PLAYER_H
+
+#include <string>
+#include <vector>
+
+class Property;
+class Board;
+class Game;
+
+class Player {
+private:
+    std::string name;
+    int money;
+    int position;
+    bool inJail;
+    int turnsInJail;
+    std::vector<Property*> properties;
+    int getOutOfJailCards;
+    const Board* board;
+    Game* game;
+
+public:
+    Player(const std::string& name, const Board* board, Game* game);
+    ~Player();
+    void moveBy(int spaces);
+    void moveToPosition(int newPosition);
+    void addMoney(int amount);
+    void removeMoney(int amount);
+    void buyProperty(Property* property);
+    bool ownsProperty(const Property* property) const;
+    void goToJail();
+    bool isInJail() const;
+    void releaseFromJail();
+    int getMoney() const;
+    int getPosition() const;
+    const std::string& getName() const;
+    void addGetOutOfJailCard();
+    bool useGetOutOfJailCard();
+    void incrementTurnsInJail();
+    int getTurnsInJail() const;
+    Game* getGame() const { return game; }
+    const std::vector<Property*>& getProperties() const;
+    void clearProperties();
+    void addProperty(Property* property);
+    int getGetOutOfJailCards() const;
+    bool ownsPropertyLandedOn(const Player& otherPlayer) const;
+
+};
+
+#endif
