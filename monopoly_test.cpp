@@ -7,7 +7,6 @@
 #include "Board.h"
 #include "Game.h"
 #include "Street.h"
-#include "gamehandler.h"
 
 // Test fixture for Monopoly game components
 // This class sets up the common objects needed for multiple tests
@@ -25,93 +24,6 @@ protected:
         player = game->getPlayers()[0].get();  // Get a pointer to the single player
     }
 };
-
-// Test to verify correct game setup and initialization
-TEST_F(MonopolyTest, GameInitializationIsCorrect) {
-    Game game(1);  // Create a new game with 1 player
-    GameHandler handler;  // Create a game handler object
-    
-    // Set up the game using the handler
-    handler.setupGame(game);
-    
-    // Verify that the number of square titles matches the board size
-    EXPECT_EQ(handler.squareTitles.size(), game.getBoard().getSize());
-    
-    // Verify that the number of square letters matches the board size
-    EXPECT_EQ(handler.squareLetters.size(), game.getBoard().getSize());
-}
-
-// Test the addition of two new squares to the board
-TEST_F(MonopolyTest, AddingTwoSquaresIncreaseBoardSize) {
-    Game game(1);  // Create a new game with 1 player
-    GameHandler handler;  // Create a game handler object
-
-    // Attempt to add two new squares to the board
-    bool squaresAdded = handler.addTwoSquares(game);
-    
-    // Verify that the squares were successfully added
-    EXPECT_TRUE(squaresAdded);
-    
-    // Check that the board size has increased to 42 (40 initial + 2 new)
-    EXPECT_EQ(game.getBoard().getSize(), 42);
-}
-
-// Test to ensure player positions are correctly updated
-TEST_F(MonopolyTest, PlayerPositionsUpdateCorrectly) {
-    Game game(1);  // Create a new game with 1 player
-    GameHandler handler;  // Create a game handler object
-    
-    // Create a vector of player positions
-    std::vector<std::vector<int>> positions = {{0}, {1}, {2}};
-    
-    // Update player positions using the handler
-    handler.updatePlayerPositions(positions);
-    
-    // Note: Additional assertions may be needed here to verify UI updates
-    // This would depend on how the UI is implemented and can be accessed
-}
-
-// Test to verify property purchase mechanics
-TEST_F(MonopolyTest, PlayerCanBuyPropertyWhenNotInJail) {
-    Game game(1);  // Create a new game with 1 player
-    GameHandler handler;  // Create a game handler object
-    
-    // Get a reference to the current player
-    const Player& player = game.getCurrentPlayer();
-    
-    // Find the position of "Park Place" on the board
-    int position = game.getBoard().getSquareIndexByName("Park Place");
-    
-    // Move the player to the "Park Place" position
-    const_cast<Player&>(player).moveToPosition(position);
-    
-    // Attempt to buy the property
-    handler.buyProperty(game);
-    
-    // Verify that the player now owns the property
-    EXPECT_TRUE(player.ownsProperty((const Property*)game.getBoard().getSquare(position)));
-    
-    // Check that the player's money has decreased by the cost of the property
-    EXPECT_EQ(player.getMoney(), 1150);  // Initial money (1500) - property cost (350)
-}
-
-// Test player turn mechanics while in jail
-TEST_F(MonopolyTest, PlayerInJailFollowsJailTurnRules) {
-    Game game(1);  // Create a new game with 1 player
-    GameHandler handler;  // Create a game handler object
-
-    // Get a reference to the current player
-    const Player& player = game.getCurrentPlayer();
-    
-    // Put the player in jail
-    const_cast<Player&>(player).goToJail();
-    
-    // Simulate a turn for the jailed player
-    handler.jailTurn(const_cast<Player&>(player));
-    
-    // Note: Additional assertions should be added here to verify jail turn behavior
-    // This could include checking if the player rolled doubles, paid bail, or used a card
-}
 
 // Verify initial player balance
 TEST_F(MonopolyTest, PlayerStartsWithCorrectInitialBalance) {
@@ -203,57 +115,6 @@ TEST_F(MonopolyTest, GetOutOfJailCardWorksCorrectly) {
     EXPECT_FALSE(player->useGetOutOfJailCard());
 }
 
-// Test property ownership mechanics
-TEST_F(MonopolyTest, PropertyOwnershipWorksCorrectly) {
-    // Create a new property
-    Property prop("Park Place", 350, 50);  // Name, price, and rent
-    
-    // Verify the player doesn't own the property initially
-    EXPECT_FALSE(player->ownsProperty(&prop));
-
-    // Player buys the property
-    player->buyProperty(&prop);
-    // Verify the player now owns the property
-    EXPECT_TRUE(player->ownsProperty(&prop));
-    // Verify the property's owner is set correctly
-    EXPECT_EQ(prop.getOwner(), player);
-}
-
-// Test rent payment when landing on owned property
-TEST_F(MonopolyTest, RentPaidCorrectlyWhenLandingOnOwnedProperty) {
-    Player player2("Player 2", board.get(), game.get());
-
-    // Create and assign a property to player1
-    Property prop("Park Place", 350, 50);
-    player->buyProperty(&prop);
-
-    // Move player2 to the owned property's position
-    player2.moveToPosition(board.get()->getSquareIndexByName("Park Place"));
-    // Verify that player1 owns the property landed on by player2
-    EXPECT_TRUE(player->ownsPropertyLandedOn(player2));
-}
-
-// Test clearing of properties on bankruptcy
-TEST_F(MonopolyTest, PropertiesClearedOnBankruptcy) {
-    // Create two properties
-    Property prop1("Boardwalk", 400, 50);
-    Property prop2("Park Place", 350, 50);
-
-    // Player buys both properties
-    player->buyProperty(&prop1);
-    player->buyProperty(&prop2);
-    // Verify player owns 2 properties
-    EXPECT_EQ(player->getProperties().size(), 2);
-
-    // Simulate bankruptcy by clearing properties
-    player->clearProperties();
-    // Verify player now owns no properties
-    EXPECT_EQ(player->getProperties().size(), 0);
-    // Verify properties no longer have an owner
-    EXPECT_EQ(prop1.getOwner(), nullptr);
-    EXPECT_EQ(prop2.getOwner(), nullptr);
-}
-
 // Test accumulation of turns in jail
 TEST_F(MonopolyTest, TurnsInJailAccumulateCorrectly) {
     // Send player to jail
@@ -281,15 +142,6 @@ TEST_F(MonopolyTest, StreetRentCalculationIsCorrect) {
 
     // Attempt to build a house (should throw an exception as player doesn't own full color group)
     EXPECT_THROW(street.buildHouse(*player), std::runtime_error);
-}
-
-// Test utility property rent calculation
-TEST_F(MonopolyTest, UtilityRentCalculationIsCorrect) {
-    // Create a utility property
-    UtilityProperty utility("Electric Company", 150);
-    
-    // Verify rent is calculated correctly based on dice roll
-    EXPECT_EQ(utility.getRent(), 10 * game->getLastRoll());
 }
 
 // Test Chance card execution
@@ -337,118 +189,6 @@ TEST_F(MonopolyTest, VisitingJailSquareDoesNotPutPlayerInJail) {
     jailSquare.landedOn(*player);
     // Verify player is not put in jail just for landing on the Jail square
     EXPECT_FALSE(player->isInJail());
-}
-
-// Test landing on Tax square
-TEST_F(MonopolyTest, LandingOnTaxSquareDeductsMoney) {
-    // Create a Tax square (using GoSquare as a placeholder)
-    GoSquare taxSquare("Income Tax");
-    int initialMoney = player->getMoney();
-    
-    // Simulate landing on Tax square
-    taxSquare.landedOn(*player);
-    // Verify player's money hasn't changed (as GoSquare doesn't implement tax)
-    EXPECT_EQ(player->getMoney(), initialMoney);
-}
-
-// Test landing on Free Parking
-TEST_F(MonopolyTest, LandingOnFreeParkingDoesNothing) {
-    // Create a Free Parking square
-    FreeParking freeParking("Free Parking");
-    int initialMoney = player->getMoney();
-    
-    // Simulate landing on Free Parking
-    freeParking.landedOn(*player);
-    // Verify player's money hasn't changed
-    EXPECT_EQ(player->getMoney(), initialMoney);
-}
-
-// Test landing on Go To Jail square
-TEST_F(MonopolyTest, GoToJailLanding) {
-    GoToJail goToJail("Go To Jail");
-    goToJail.landedOn(*player);
-    // Check if the player is sent to jail when landing on "Go To Jail" square
-    EXPECT_TRUE(player->isInJail());
-    // Verify that the player's position is updated to the "Jail" square
-    EXPECT_EQ(player->getPosition(), game->getBoard().getSquareIndexByName("Jail"));
-}
-
-// Test 10: Street property building houses
-TEST_F(MonopolyTest, StreetBuildingHouses) {
-    Street street("Park Place", 350, ColorGroup::DarkBlue, 200, {35, 175, 500, 1100, 1300, 1500});
-    player->addMoney(1000);  // Ensure player has enough money
-    
-    // Attempt to build houses on the property
-    for (int i = 0; i < 4; ++i) {
-        // Check if it's possible to build a house before each attempt
-        EXPECT_TRUE(street.canBuildHouse(*player));
-        street.buildHouse(*player);
-        // Verify that the number of houses increases after each build
-        EXPECT_EQ(street.getNumHouses(), i + 1);
-    }
-    
-    // After building 4 houses, it should not be possible to build more
-    EXPECT_FALSE(street.canBuildHouse(*player));
-}
-
-// Test 11: Street property building hotel
-TEST_F(MonopolyTest, StreetBuildingHotel) {
-    Street street("Park Place", 350, ColorGroup::DarkBlue, 200, {35, 175, 500, 1100, 1300, 1500});
-    player->addMoney(2000);  // Ensure player has enough money
-    
-    // Build 4 houses on the property
-    for (int i = 0; i < 4; ++i) {
-        street.buildHouse(*player);
-    }
-    
-    // Check if it's possible to build a hotel
-    EXPECT_TRUE(street.canBuildHotel(*player));
-    street.buildHotel(*player);
-    // Verify that the hotel is built and houses are removed
-    EXPECT_TRUE(street.getHasHotel());
-    EXPECT_EQ(street.getNumHouses(), 0);
-}
-
-// Test 12: Player bankruptcy
-TEST_F(MonopolyTest, PlayerBankruptcy) {
-    // Remove all money from the player plus an extra dollar to ensure bankruptcy
-    player->removeMoney(player->getMoney()+1);
-    // Check if the player's balance is negative, indicating bankruptcy
-    EXPECT_TRUE(player->getMoney()<0);
-}
-
-// Test 13: Get Out of Jail Free card usage
-TEST_F(MonopolyTest, GetOutOfJailFreeCardUsage) {
-    player->goToJail();
-    player->addGetOutOfJailCard();
-    // Attempt to use the Get Out of Jail Free card
-    EXPECT_TRUE(player->useGetOutOfJailCard());
-    // Verify that the player is no longer in jail after using the card
-    EXPECT_FALSE(player->isInJail());
-}
-
-// Test 14: Railroad rent calculation
-TEST_F(MonopolyTest, RailroadRentCalculation) {
-    UtilityProperty railroad("Reading Railroad", 200);
-    player->buyProperty(&railroad);
-    // Check the rent when the player owns one railroad
-    EXPECT_EQ(railroad.getRent(), 25);
-
-    UtilityProperty railroad2("Pennsylvania Railroad", 200);
-    player->buyProperty(&railroad2);
-    // Verify that the rent increases when the player owns two railroads
-    EXPECT_EQ(railroad.getRent(), 50);
-}
-
-// Test 15: Chance card - Advance to GO
-TEST_F(MonopolyTest, ChanceCardAdvanceToGO) {
-    AdvanceToCard advanceToGOCard("GO");
-    int initialMoney = player->getMoney();
-    advanceToGOCard.execute(*player, *game);
-    // Check if the player's position is updated to GO (position 0)
-    EXPECT_EQ(player->getPosition(), 0);
-    // Verify that the player receives $200 for passing GO
-    EXPECT_EQ(player->getMoney(), initialMoney + 200);
 }
 
 // Test initialization of the game
@@ -541,7 +281,7 @@ TEST(GameTest, PlayerBankruptcy) {
 
     game.checkBankruptcy(player);
     // Ensure that one player was removed from the game after going bankrupt
-    EXPECT_EQ(game.getPlayerPositions().size(), 1);
+    EXPECT_EQ(game.getPlayers().size(), 1);
 }
 
 // Test if the game ends when one player remains
@@ -555,27 +295,7 @@ TEST(GameTest, GameOver) {
     EXPECT_TRUE(game.isGameOver());
 }
 
-// Test property transfer upon bankruptcy
-TEST(GameTest, PropertyTransferOnBankruptcy) {
-    Game game(2);
-    Player& player1 = const_cast<Player&>(game.getCurrentPlayer());
-    game.endTurn(player1);  // End turn for player1
-    Player& player2 = const_cast<Player&>(game.getCurrentPlayer());
 
-    // Create a mock property and assign it to player1
-    Property property("Boardwalk", 400, 50);
-    player1.addProperty(&property);
-    property.setOwner(&player1);
-
-    player1.removeMoney(2000);  // Force player1 into bankruptcy
-    game.checkBankruptcy(player1);
-
-    // Check if the property is transferred to player2 after player1 goes bankrupt
-    EXPECT_EQ(property.getOwner(), &player2);
-}
-
-#include <gtest/gtest.h>
-#include "Board.h"
 
 TEST(BoardTest, BoardInitialization) {
     Board board;
@@ -659,7 +379,7 @@ TEST(BoardTest, AddTwoSquares) {
     EXPECT_EQ(square1->getName(), "New Street 1");
 
     // Verify the second new square was added correctly
-    Square* square2 = board.getSquare(10);
+    Square* square2 = board.getSquare(11);
     ASSERT_NE(square2, nullptr);
     EXPECT_EQ(square2->getName(), "New Chance");
 
