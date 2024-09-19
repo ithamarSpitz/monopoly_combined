@@ -90,11 +90,6 @@ You will need to install **Qt** and **Google Test (gtest)** to run this project 
    - To install Google Test:
        ```terminal
        sudo apt-get install libgtest-dev
-       sudo apt-get install cmake
-       cd /usr/src/gtest
-       sudo cmake CMakeLists.txt
-       sudo make
-       sudo cp *.a /usr/lib
        ```
 
 ### Build Instructions:
