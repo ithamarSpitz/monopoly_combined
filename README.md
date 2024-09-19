@@ -78,7 +78,6 @@ You will need to install **Qt** and **Google Test (gtest)** to run this project 
 1. **Qt Installation**:
    - Install Qt by following the official [Qt installation guide](https://doc.qt.io/qt-6/gettingstarted.html).
    - Alternatively, use a package manager:
-     - On Ubuntu:
        ```terminal
        sudo apt-get install qt6-base-dev
        ```
@@ -89,7 +88,6 @@ You will need to install **Qt** and **Google Test (gtest)** to run this project 
 
 2. **Google Test Installation**:
    - To install Google Test:
-     - On Ubuntu:
        ```terminal
        sudo apt-get install libgtest-dev
        sudo apt-get install cmake
