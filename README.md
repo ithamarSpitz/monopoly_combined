@@ -1,7 +1,3 @@
-Here is the updated README:
-
----
-
 # Monopoly Game Project
 
 ## Overview
