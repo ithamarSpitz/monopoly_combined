@@ -11,7 +11,7 @@ class CustomWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit CustomWidget(QWidget* parent = nullptr);
+    explicit CustomWidget(int topbottom, int leftright, QWidget* parent = nullptr);
 
     void updatePlayerPositions(const QMap<int, QList<int>>& positions);
     void setSquareCount(int topBottom, int leftRight);

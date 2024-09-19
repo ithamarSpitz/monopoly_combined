@@ -4,7 +4,6 @@
 #include <iostream>
 
 void ChanceSquare::landedOn(Player& player) {
-    std::cout << player.getName() << " landed on Chance" << std::endl;
     Game* game = player.getGame();
     if (game) {
         game->drawChanceCard(player);

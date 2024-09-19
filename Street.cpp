@@ -78,30 +78,7 @@ int Street::getRent() const {
 void Street::landedOn(Player& player) {
     if (owner && owner != &player) {
         int rentToPay = getRent();
-        std::cout << player.getName() << " landed on " << getName() << " owned by " << owner->getName() << std::endl;
-        std::cout << "Rent to pay: $" << rentToPay << std::endl;
-
         player.removeMoney(rentToPay);
         owner->addMoney(rentToPay);
-        std::cout << player.getName() << " paid $" << rentToPay << " to " << owner->getName() << std::endl;
-
     } 
-    // else 
-    // if (!owner) {
-    //     // Offer to buy the property
-    //     std::cout << getName() << " is unowned. Would " << player.getName() << " like to buy it for $" << getPrice() << "? (y/n): ";
-    //     char choice;
-    //     std::cin >> choice;
-
-    //     if (choice == 'y' || choice == 'Y') {
-    //         if (player.getMoney() >= getPrice()) {
-    //             player.removeMoney(getPrice());
-    //             setOwner(&player);
-    //             player.buyProperty(this);
-    //             std::cout << player.getName() << " bought " << getName() << " for $" << getPrice() << std::endl;
-    //         } else {
-    //             std::cout << player.getName() << " doesn't have enough money to buy " << getName() << std::endl;
-    //         }
-    //     }
-    // }
 }

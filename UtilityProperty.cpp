@@ -21,7 +21,6 @@ int UtilityProperty::getRent() const{
 }
 
 void UtilityProperty::landedOn(Player& player) {
-    std::cout << player.getName() << " landed on " << getName() << std::endl;
     if (getOwner() != nullptr && getOwner() != &player) {
         // Calculate and pay rent
         int rent = getRent();
@@ -29,6 +28,5 @@ void UtilityProperty::landedOn(Player& player) {
         getOwner()->addMoney(rent);
 
     } else {
-        std::cout << player.getName() << " owns this utility." << std::endl;
     }
 }

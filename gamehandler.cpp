@@ -25,9 +25,10 @@ std::vector<std::string> nameColors = {
 };
 
 GameHandler::GameHandler() 
-    : customWidget(new CustomWidget()),
+    : window(new QWidget),
+      customWidget(new CustomWidget(11,9)),
       squareTitles(std::vector<std::string>{""}),
-      squareLetters(NUM_SQUARES, std::vector<int>{-1, 0})  // Initialize squareLetters
+      squareLetters(std::vector<std::vector<int>>{})  // Initialize squareLetters
 {
     QWidget* window = new QWidget;
     window->setWindowTitle("Monopoly Game");
@@ -39,12 +40,87 @@ GameHandler::GameHandler()
     window->show();
 }
 
-void GameHandler::setupGame(const std::vector<int>& colors, const std::vector<std::string>& titles) {
+bool GameHandler::addTwoSquares(Game& game){
+
+    std::string answer =  askQuestion({"add squares?", "no"});
+    if(answer == "add squares?"){
+        std::vector<int> validLocations = {0, 9, 20, 29};
+        int location1, location2;
+        answer = askQuestion({
+            "locatios " + std::to_string(validLocations[0]) + " and " + std::to_string(validLocations[2]),
+            "locatios " + std::to_string(validLocations[0]) + " and " + std::to_string(validLocations[3]),
+            "locatios " + std::to_string(validLocations[1]) + " and " + std::to_string(validLocations[2]),
+            "locatios " + std::to_string(validLocations[1]) + " and " + std::to_string(validLocations[3])
+            });
+        if(answer.find(std::to_string(validLocations[0])) != std::string::npos){
+            location1 = validLocations[0];
+        }else{
+            location1 = validLocations[1];
+        }
+        if(answer.find(std::to_string(validLocations[2])) != std::string::npos){
+            location2 = validLocations[2];
+        }else{
+            location2 = validLocations[3];
+        }
+
+        std::vector<std::string>types{"Street", "ChanceSquare", "CommunityChestSquare", "UtilityProperty"};
+        std::string question = "first square is a ";
+        std::string type1;
+        answer = askQuestion({
+            question+types[0],
+            question+types[1],
+            question+types[2],
+            question+types[3]
+            });
+        for (int i = 0; i < 4; i++){ if(answer.find(types[i]) != std::string::npos) { type1 = types[i]; } }
+        question = "second square is a ";
+        std::string type2;
+        answer = askQuestion({
+            question+types[0],
+            question+types[1],
+            question+types[2],
+            question+types[3]
+            });
+        for (int i = 0; i < 4; i++){ if(answer.find(types[i]) != std::string::npos) { type2 = types[i]; } }
+        
+        game.getBoard().addTwoSquares(type1, type2, location1, location2, 
+                                  "New " + type1 + " 1", "New " + type2 + " 2", 100, 100);
+        return true;
+    }
+    return false;
+}
+
+void GameHandler::setupGame(Game& game) {
+    int counter = 0;
+    while (addTwoSquares(game)){
+        counter++;
+    }
+    if(counter > 0){
+        customWidget = new CustomWidget(11+counter,9);
+        QVBoxLayout* mainLayout = new QVBoxLayout(window);
+        mainLayout->addWidget(customWidget);
+        window->setLayout(mainLayout);
+        window->show();
+    }
+    std::vector<int> colors = {};
+    std::vector<std::string> titles = {};
+
+    auto streetColors  = game.getBoard().getSquareNamesAndColors();
+    for (const auto& [name, color] : streetColors) {
+        titles.push_back(name);
+        colors.push_back(color);
+    }
+
     squareTitles = titles;
     QStringList qTitles;
     for (const auto& title : titles) {
         qTitles << QString::fromStdString(title);
     }
+
+    for (size_t i = 0; i < colors.size(); i++) {
+        squareLetters.push_back(std::vector<int>{-1, 0});
+    }
+    
 
     QMap<int, QColor> squareColors;
     for (int i = 0; i < static_cast<int>(colors.size()); ++i) {
@@ -53,9 +129,6 @@ void GameHandler::setupGame(const std::vector<int>& colors, const std::vector<st
 
     customWidget->setSquareColors(squareColors);
     customWidget->setTitles(qTitles);
-
-    std::vector<std::vector<int>> defaultLetters(40, std::vector<int>{-1, 0});
-    //updateLetters(squareLetters);
 
     QApplication::processEvents();
 }
@@ -88,7 +161,7 @@ void GameHandler::updatePlayerDetails(Player& currentPlayer) {
 void GameHandler::updateLetters(const std::vector<std::vector<int>>& letters) {
 
     
-    squareLetters.resize(40, std::vector<int>{-1, 0});
+    squareLetters.resize(letters.size(), std::vector<int>{-1, 0});
     for (size_t i = 0; i < letters.size() && i < squareLetters.size(); ++i) {
         if (letters[i].size() >= 2) {
             squareLetters[i] = std::vector<int>{letters[i][0], letters[i][1]};
@@ -107,7 +180,7 @@ void GameHandler::updateLetter(Player& player) {
         Street* street = dynamic_cast<Street*>(property);
         if (street) {  // Check if the property is a Street
             std::string name = street->getName();
-            for (size_t i = 0; i < squareTitles.size() && i < NUM_SQUARES; i++) {
+            for (size_t i = 0; i < squareTitles.size(); i++) {
                 if (squareTitles[i] == name) {
                     int playerNum = player.getName().back() - '1';
                     if (street->getHasHotel()) {
@@ -123,7 +196,7 @@ void GameHandler::updateLetter(Player& player) {
 
     // Update the widget with the new squareLetters
     QMap<int, QList<int>> qtLetters;
-    for (int i = 0; i < NUM_SQUARES; ++i) {
+    for (int i = 0; i < player.getGame()->getBoard().getSize(); ++i) {
         qtLetters[i] = QList<int>{squareLetters[i][0], squareLetters[i][1]};
     }
     customWidget->setSquareLetters(qtLetters);
@@ -365,7 +438,6 @@ void GameHandler::playTurn(Game& game) {
             }
         }
 
-        int playerNum = currentPlayer.getName().back() - '1';
         updatePlayerDetails(currentPlayer);
         updatePlayerPositions(game.getPlayerPositions());
         updateAllPlayersProperties(game);

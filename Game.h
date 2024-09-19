@@ -22,7 +22,6 @@ private:
     std::unique_ptr<Card> lastDrawnCard;  // New class variable
 
     void initializeCards();
-    void checkBankruptcy(Player& player);
     void removePlayer(int playerIndex);
     void returnPropertiesToBank(Player& player);
     Player* findCreditor(const Player& bankruptPlayer);
@@ -47,11 +46,12 @@ public:
     std::vector<std::vector<int>> getPlayerPositions() const;
     const Player& getCurrentPlayer() const;
     const Board& getBoard() const { return board; }
+    Board& getBoard() { return board; }
     const std::vector<std::unique_ptr<Player>>& getPlayers() const { return players; }
     int getLastRoll() const { return lastRoll; }
     std::vector<int> roll(Player& player);
     void checkConsecutiveDoubles(Player& player, int roll1, int roll2);
-    
+    void checkBankruptcy(Player& player);
     // New function to get the name of the last drawn card
     std::string getLastDrawnCardName() const;
 };

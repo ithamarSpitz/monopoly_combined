@@ -4,7 +4,6 @@
 #include <iostream>
 
 void CommunityChestSquare::landedOn(Player& player) {
-    std::cout << player.getName() << " landed on Community Chest" << std::endl;
     Game* game = player.getGame();
     if (game) {
         game->drawCommunityChestCard(player);

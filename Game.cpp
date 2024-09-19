@@ -43,17 +43,12 @@ void Game::initializeCards() {
 }
 
 void Game::startTurn() {
-    std::cout << "new turn!" << std::endl;
-    Player& player = *players[currentPlayerIndex];
-    std::cout << player.getName() << "'s turn!" << std::endl;
     lastDrawnCard.reset();
 }
 
 void Game::endTurn(Player& player) {
     checkBankruptcy(player); 
-
-    //std::cout << player.getName() << " ends turn!" << std::endl;
-     // Move to the next player for the next turn
+    // Move to the next player for the next turn
     currentPlayerIndex++;
     if (static_cast<size_t>(currentPlayerIndex) >= players.size()) {
         currentPlayerIndex = 0;
@@ -76,7 +71,6 @@ void Game::processPlayerTurn(Player& player) {
         // Check if the player passed GO
         if (newPosition < oldPosition) {
             player.addMoney(200);
-            std::cout << player.getName() << " passed GO and collected $200!" << std::endl;
         }
 
         // Land on a new square
@@ -94,7 +88,6 @@ void Game::checkConsecutiveDoubles(Player& player, int roll1, int roll2) {
     if (dice.isDouble(roll1, roll2)) {
         consecutiveDoubles++;
         if (consecutiveDoubles == 3) {
-            std::cout << player.getName() << " rolled three consecutive doubles and is being sent to jail!" << std::endl;
             sendPlayerToJail(player);
             consecutiveDoubles = 0;
         }
@@ -104,21 +97,16 @@ void Game::checkConsecutiveDoubles(Player& player, int roll1, int roll2) {
 }
 
 void Game::sendPlayerToJail(Player& player) {
-    std::cout << player.getName() << " is being sent to jail!" << std::endl;
     player.goToJail();
-    player.moveToPosition(10);  // Assuming Jail is at position 10
+    player.moveToPosition(getBoard().getSquareIndexByName("Jail"));
 }
 
 void Game::checkBankruptcy(Player& player) {
     if (player.getMoney() < 0) {
-        std::cout << player.getName() << " is bankrupt!" << std::endl;
-
         Player* creditor = findCreditor(player);
         if (creditor) {
-            std::cout << player.getName() << " transfers all assets to " << creditor->getName() << std::endl;
             transferAssets(player, *creditor);
         } else {
-            std::cout << player.getName() << " is bankrupt due to bank fees. All properties are returned to the bank." << std::endl;
             returnPropertiesToBank(player);
         }
 
@@ -129,14 +117,6 @@ void Game::checkBankruptcy(Player& player) {
 bool Game::isGameOver() const {
     return gameOver || players.size() == 1 || std::any_of(players.begin(), players.end(),
         [](const auto& player) { return player->getMoney() >= 4000; });
-}
-
-void Game::play() {
-    // while (!isGameOver()) {
-    //     startTurn();
-    //     endTurn();
-    // }
-    // // Announce winner
 }
 
 Player* Game::findCreditor(const Player& bankruptPlayer) {
@@ -182,82 +162,9 @@ void Game::removePlayer(Player* playerToRemove) {
         if (currentPlayerIndex >= index) {
             currentPlayerIndex--;
         }
-        std::cout << name << " has been removed from the game." << std::endl;
         if (players.size() == 1) {
-            std::cout << "Game over! " << players[0]->getName() << " wins!" << std::endl;
             gameOver = true;
         }
-    }
-}
-
-void Game::buildHouse(Player& player) {
-    std::vector<Street*> buildableStreets;
-    for (auto& property : player.getProperties()) {
-        Street* street = dynamic_cast<Street*>(property);
-        if (street && street->canBuildHouse(player)) {
-            buildableStreets.push_back(street);
-        }
-    }
-
-    if (buildableStreets.empty()) {
-        std::cout << "You can't build any houses at the moment.\n";
-        return;
-    }
-
-    std::cout << "Select a street to build a house on:\n";
-    for (size_t i = 0; i < buildableStreets.size(); ++i) {
-        std::cout << i + 1 << ". " << buildableStreets[i]->getName() 
-                  << " (Current houses: " << buildableStreets[i]->getNumHouses() << ")\n";
-    }
-
-    char cChoice;
-    std::cin >> cChoice;
-    size_t choice = cChoice - '0';
-    if (choice > 0 && choice <= buildableStreets.size()) {
-        Street* selectedStreet = buildableStreets[choice - 1];
-        try {
-            selectedStreet->buildHouse(player);
-            std::cout << "House built on " << selectedStreet->getName() << "\n";
-        } catch (const std::runtime_error& e) {
-            std::cout << "Error: " << e.what() << "\n";
-        }
-    } else {
-        std::cout << "Invalid choice.\n";
-    }
-}
-
-void Game::buildHotel(Player& player) {
-    std::vector<Street*> buildableStreets;
-    for (auto& property : player.getProperties()) {
-        Street* street = dynamic_cast<Street*>(property);
-        if (street && street->canBuildHotel(player)) {
-            buildableStreets.push_back(street);
-        }
-    }
-
-    if (buildableStreets.empty()) {
-        std::cout << "You can't build any hotels at the moment.\n";
-        return;
-    }
-
-    std::cout << "Select a street to build a hotel on:\n";
-    for (size_t i = 0; i < buildableStreets.size(); ++i) {
-        std::cout << i + 1 << ". " << buildableStreets[i]->getName() << "\n";
-    }
-
-    char cChoice;
-    std::cin >> cChoice;
-    size_t choice = cChoice - '0';
-    if (choice > 0 && choice <= buildableStreets.size()) {
-        Street* selectedStreet = buildableStreets[choice - 1];
-        try {
-            selectedStreet->buildHotel(player);
-            std::cout << "Hotel built on " << selectedStreet->getName() << "\n";
-        } catch (const std::runtime_error& e) {
-            std::cout << "Error: " << e.what() << "\n";
-        }
-    } else {
-        std::cout << "Invalid choice.\n";
     }
 }
 
@@ -272,9 +179,9 @@ bool Game::canBuild(Player& player) {
 }
 
 std::vector<std::vector<int>> Game::getPlayerPositions() const {
-    std::vector<std::vector<int>> positions(40);
-    for (int j = 0; j < 40; j++){
-        for (int i = 0; i < players.size(); ++i) {
+    std::vector<std::vector<int>> positions(getBoard().getSize());
+    for (int j = 0; j < getBoard().getSize(); j++){
+        for (int i = 0; i < (int)players.size(); ++i) {
             if(players[i]->getPosition() == j)
                 positions[j].push_back(players[i]->getName().back()-'0');
         }
@@ -289,27 +196,23 @@ const Player& Game::getCurrentPlayer() const {
 
 void Game::drawChanceCard(Player& player) {
     if (chanceCards.empty()) {
-        std::cout << "Chance card deck is empty. Reshuffling..." << std::endl;
         initializeCards();
     }
     
     lastDrawnCard = std::move(chanceCards.back());
     chanceCards.pop_back();
     
-    std::cout << player.getName() << " draws a Chance card: " << lastDrawnCard->getDescription() << std::endl;
     lastDrawnCard->execute(player, *this);
 }
 
 void Game::drawCommunityChestCard(Player& player) {
     if (communityChestCards.empty()) {
-        std::cout << "Community Chest card deck is empty. Reshuffling..." << std::endl;
         initializeCards();
     }
     
     lastDrawnCard = std::move(communityChestCards.back());
     communityChestCards.pop_back();
     
-    std::cout << player.getName() << " draws a Community Chest card: " << lastDrawnCard->getDescription() << std::endl;
     lastDrawnCard->execute(player, *this);
 }
 
