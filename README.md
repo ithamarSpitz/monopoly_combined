@@ -23,11 +23,15 @@ This project is a C++ implementation of a Monopoly-like board game. It includes 
 - **Square** (`Square.h`, `Square.cpp`): Base class for all types of squares on the board.
 - **Street** (`Street.h`, `Street.cpp`): Represents property squares that can be bought by players, built with houses and hotels, and charged rent.
 - **Special Squares**: Other specific types of squares include:
-  - `ChanceSquare` (`ChanceSquare.h`, `ChanceSquare.cpp`)
-  - `CommunityChestSquare` (`CommunityChestSquare.h`, `CommunityChestSquare.cpp`)
-  - `GoSquare` (`GoSquare.h`, `GoSquare.cpp`)
-  - `FreeParking` (`FreeParking.h`, `FreeParking.cpp`)
-  - `GoToJail` (`GoToJail.h`, `GoToJail.cpp`)
+
+  - `UtilityProperty` - for rails and companies (`ChanceSquare.h`, `ChanceSquare.cpp`)
+
+  - `ChanceSquare` - for chance cards (`ChanceSquare.h`, `ChanceSquare.cpp`)
+
+  - `CommunityChestSquare` - for community chest cards (`CommunityChestSquare.h`, `CommunityChestSquare.cpp`)
+  - `GoSquare` - for the start point (`GoSquare.h`, `GoSquare.cpp`)
+  - `FreeParking` - do nothing, skip the turn (`FreeParking.h`, `FreeParking.cpp`)
+  - `GoToJail`, `Jail` (`GoToJail.h`, `GoToJail.cpp`, `Jail.h`, `Jail.cpp`)
   - `Tax` (`Tax.h`, `Tax.cpp`): Represents tax squares that deduct money from the player landing on it.
 
 ### 3. **Cards**
@@ -40,10 +44,6 @@ This project is a C++ implementation of a Monopoly-like board game. It includes 
   - Example: `paintEvent()` draws the game board and updates the display during gameplay.
 - **GameHandler** (`gamehandler.h`, `gamehandler.cpp`): Manages the interaction between the game logic and the GUI. It updates the game state, processes player decisions, and handles events like buying properties or drawing cards.
   - Example: `setupGame()` initializes the board with squares, player positions, and other visual elements.
-
-### 5. **Utility Classes**
-- **Dice**: Random number generation for dice rolls.
-- **UtilityProperty**: A type of property that functions differently than standard street properties.
 
 ## Class Hierarchy
 
