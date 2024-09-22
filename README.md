@@ -1,5 +1,8 @@
 # Monopoly Game Project
 
+![Screenshot 2024-09-22 141700](https://github.com/user-attachments/assets/ee4b9518-ca68-42cd-beb1-d634d42edf17)
+
+
 ## Overview
 This project is a C++ implementation of a Monopoly-like board game. It includes core components such as players, a game board, dice, and various types of squares like properties, chance, and community chest cards. A Qt-based GUI is used to represent the game board and provide interaction between players.
 
@@ -44,7 +47,11 @@ This project is a C++ implementation of a Monopoly-like board game. It includes 
 - **Community Chest Cards** (`CommunityChestCard.h`, `CommunityChestCard.cpp`): Functions similarly to Chance cards but has different effects.
 
 ### 4. **GUI (Qt-based)**
-- **Custom Widget** (`customwidget.h`, `customwidget.cpp`): The graphical component displaying the board, player positions, and properties.
+- **Custom Widget** (`customwidget.h`, `customwidget.cpp`): The graphical component displaying the board, player positions, and properties. 
+  - The players represented by small circles in different colors.
+  - The the ownership represented by the color of the square's borders 
+  - The amount of houses/hotel represented by the number 1-4 or the letter H respectively.
+  - Cities (grouping colors) represented by the background colors of the squares. 
   - Example: `paintEvent()` draws the game board and updates the display during gameplay.
 - **GameHandler** (`gamehandler.h`, `gamehandler.cpp`): Manages the interaction between the game logic and the GUI. It updates the game state, processes player decisions, and handles events like buying properties or drawing cards.
   - Example: `setupGame()` initializes the board with squares, player positions, and other visual elements.
