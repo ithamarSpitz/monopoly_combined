@@ -83,7 +83,7 @@ void CustomWidget::drawPlayerDetails(QPainter& painter) {
     painter.drawText(leftMargin, topMargin + lineHeight, "Player: " + playerName);
     painter.drawText(leftMargin, topMargin + 2*lineHeight, "Color: " + playerColor);
     painter.drawText(leftMargin, topMargin + 3*lineHeight, "Money: $" + QString::number(playerMoney));
-    painter.drawText(leftMargin, topMargin + 4*lineHeight, "Cards: " + QString::number(playerCards));
+    painter.drawText(leftMargin, topMargin + 4*lineHeight, "Get out of jail cards: " + QString::number(playerCards));
 
     painter.restore();
 }
