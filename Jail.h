@@ -10,8 +10,8 @@ public:
     static constexpr int JAIL_FEE = 50;
     static constexpr int MAX_TURNS_IN_JAIL = 3;
 
-    Jail(const std::string& name);
-    void landedOn(Player& player) override;
+    Jail(const std::string& name) : Square(name) {};
+    void landedOn(Player& player) override {};
 };
 
 #endif

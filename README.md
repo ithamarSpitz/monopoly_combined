@@ -32,9 +32,9 @@ This project is a C++ implementation of a Monopoly-like board game. It includes 
 
   - `GoSquare` - for the start point (`GoSquare.h`, `GoSquare.cpp`)
 
-  - `FreeParking` - do nothing, skip the turn (`FreeParking.h`, `FreeParking.cpp`)
+  - `FreeParking` - do nothing, skip the turn (`FreeParking.h`)
 
-  - `GoToJail`, `Jail` (`GoToJail.h`, `GoToJail.cpp`, `Jail.h`, `Jail.cpp`)
+  - `GoToJail`, `Jail` (`GoToJail.h`, `GoToJail.cpp`, `Jail.h`)
   
   - `Tax` (`Tax.h`, `Tax.cpp`): Represents tax squares that deduct money from the player landing on it.
 

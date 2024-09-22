@@ -6,7 +6,7 @@ GTEST_FLAGS = -lgtest -lgtest_main -pthread
 
 # Source files
 SRC = main.cpp gamehandler.cpp customwidget.cpp Board.cpp Player.cpp Game.cpp Square.cpp \
-      GoSquare.cpp Jail.cpp FreeParking.cpp GoToJail.cpp Tax.cpp Street.cpp Property.cpp \
+      GoSquare.cpp GoToJail.cpp Tax.cpp Street.cpp Property.cpp \
       UtilityProperty.cpp ChanceSquare.cpp CommunityChestSquare.cpp \
       CommunityChestCard.cpp Card.cpp Dice.cpp
 

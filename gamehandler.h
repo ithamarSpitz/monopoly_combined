@@ -15,7 +15,6 @@ public:
     void setupGame(Game& game);
     void updatePlayerPositions(const std::vector<std::vector<int>>& playerPositions);
     void updatePlayerDetails(Player& player);
-    void updateLetters(const std::vector<std::vector<int>>& letters);
     void updateLetter(Player& player);
     std::string askQuestion(const std::vector<std::string>& options);
     void playTurn(Game& game);

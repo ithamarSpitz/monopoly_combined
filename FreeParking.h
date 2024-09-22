@@ -7,8 +7,8 @@
 
 class FreeParking : public Square {
 public:
-    FreeParking(const std::string& name);
-    void landedOn(Player& player) override;
+    FreeParking(const std::string& name) : Square(name) {};
+    void landedOn(Player& player) override {};
 };
 
 #endif
