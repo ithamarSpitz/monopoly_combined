@@ -29,9 +29,13 @@ This project is a C++ implementation of a Monopoly-like board game. It includes 
   - `ChanceSquare` - for chance cards (`ChanceSquare.h`, `ChanceSquare.cpp`)
 
   - `CommunityChestSquare` - for community chest cards (`CommunityChestSquare.h`, `CommunityChestSquare.cpp`)
+
   - `GoSquare` - for the start point (`GoSquare.h`, `GoSquare.cpp`)
+
   - `FreeParking` - do nothing, skip the turn (`FreeParking.h`, `FreeParking.cpp`)
+
   - `GoToJail`, `Jail` (`GoToJail.h`, `GoToJail.cpp`, `Jail.h`, `Jail.cpp`)
+  
   - `Tax` (`Tax.h`, `Tax.cpp`): Represents tax squares that deduct money from the player landing on it.
 
 ### 3. **Cards**

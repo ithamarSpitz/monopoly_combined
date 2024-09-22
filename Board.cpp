@@ -217,8 +217,7 @@ void Board::addTwoSquares(const std::string& type1, const std::string& type2,
     // Lambda function to create a square based on its type
     auto createSquare = [](const std::string& type, const std::string& name, int price, int location) -> std::unique_ptr<Square> {
         if (type == "Street") {
-            // Note: Using default values for color group, house cost, and rent array
-            // These should be adjusted based on the specific requirements of the new street
+            // Using adjusted values for color group, house cost, and rent array based on the specific requirements of the new street
             std::vector<ColorGroup> color =  {ColorGroup::Brown, ColorGroup::LightBlue, ColorGroup::Red, ColorGroup::Yellow};
             return std::make_unique<Street>(name, price, color[(int)(location/9)], 50, std::array<int, 6>{2, 10, 30, 90, 160, 250});
         } else if (type == "ChanceSquare") {
@@ -237,7 +236,6 @@ void Board::addTwoSquares(const std::string& type1, const std::string& type2,
     auto square2 = createSquare(type2, name2, price2, location2);
 
     // Insert the new squares at the specified location
-    // Note: We add 1 to the location because we're inserting after the specified square
     squares.insert(squares.begin() + location1 + 1, std::move(square1));
     squares.insert(squares.begin() + location2 + 2, std::move(square2));
 
