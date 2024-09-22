@@ -1,5 +1,8 @@
 # Monopoly Game Project
 
+![Screenshot 2024-09-22 141700](https://github.com/user-attachments/assets/ee4b9518-ca68-42cd-beb1-d634d42edf17)
+
+
 ## Overview
 This project is a C++ implementation of a Monopoly-like board game. It includes core components such as players, a game board, dice, and various types of squares like properties, chance, and community chest cards. A Qt-based GUI is used to represent the game board and provide interaction between players.
 
