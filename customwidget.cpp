@@ -12,8 +12,8 @@ CustomWidget::CustomWidget(int topbottom, int leftright, QWidget* parent)
 
 // Updates the widget size based on the number of squares and square size
 void CustomWidget::updateWidgetSize() {
-    int boardWidth = topBottomSquares * squareSize * 1.20;
-    int boardHeight = (leftRightSquares + 2) * squareSize * 1.20;
+    int boardWidth = topBottomSquares * squareSize * 1.15;
+    int boardHeight = (leftRightSquares + 2) * squareSize * 1.15;
     int playerDetailsWidth = 200; // Adjust this value as needed
     setFixedSize(boardWidth + playerDetailsWidth, boardHeight);
 }
@@ -61,7 +61,7 @@ void CustomWidget::setPlayerDetails(const QString& name, const QString& color, i
 
 // Draws the current player's details on the board
 void CustomWidget::drawPlayerDetails(QPainter& painter) {
-    int boardWidth = topBottomSquares * squareSize * 1.20;
+    int boardWidth = topBottomSquares * squareSize * 1.15;
     int leftMargin = boardWidth + 10;
     int topMargin = 10;
     int lineHeight = 20;
@@ -96,7 +96,7 @@ void CustomWidget::setAllPlayersProperties(const QMap<QString, QStringList>& pro
 
 // Draws the properties owned by all players
 void CustomWidget::drawAllPlayersProperties(QPainter& painter) {
-    int boardWidth = topBottomSquares * squareSize * 1.20;
+    int boardWidth = topBottomSquares * squareSize * 1.15;
     int leftMargin = boardWidth + 10;
     int topMargin = 130; // Position below player details
     int lineHeight = 20;
@@ -191,26 +191,26 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
 
     // Draw top and bottom rows of squares
     for (int i = 0; i < topBottomSquares; ++i) {
-        int xOffset = i * squareSize * 1.20;
+        int xOffset = i * squareSize * 1.15;
         int yOffset = 0;
-        QRect topSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        QRect topSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         drawSquareWithBorder(painter, topSquare, i, squareColors.value(i, Qt::white));
 
         // Draw square title
         if (i < squareTitles.size()) {
-            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.20 - 2, squareSize * 1.20 - 2);
+            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.15 - 2, squareSize * 1.15 - 2);
             painter.drawText(titleRect, squareTitles[i], textOption);
         }
 
         // Draw bottom row square
-        yOffset = (leftRightSquares + 1) * squareSize * 1.20;
-        QRect bottomSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        yOffset = (leftRightSquares + 1) * squareSize * 1.15;
+        QRect bottomSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         int bottomSquareIndex = 2*topBottomSquares + leftRightSquares - i - 1;
         drawSquareWithBorder(painter, bottomSquare, bottomSquareIndex, squareColors.value(bottomSquareIndex, Qt::white));
 
         // Draw bottom square title
         if (bottomSquareIndex < squareTitles.size()) {
-            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.20 - 2, squareSize * 1.20 - 2);
+            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.15 - 2, squareSize * 1.15 - 2);
             painter.drawText(titleRect, squareTitles[bottomSquareIndex], textOption);
         }
     }
@@ -218,26 +218,26 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
     // Draw left and right columns of squares
     for (int i = 0; i < leftRightSquares; ++i) {
         int xOffset = 0;
-        int yOffset = (i + 1) * squareSize * 1.20;
-        QRect leftSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        int yOffset = (i + 1) * squareSize * 1.15;
+        QRect leftSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         int leftSquareIndex = 2 * topBottomSquares + 2 * leftRightSquares - i - 1;
         drawSquareWithBorder(painter, leftSquare, leftSquareIndex, squareColors.value(leftSquareIndex, Qt::white));
 
         // Draw left square title
         if (leftSquareIndex < squareTitles.size()) {
-            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.20 - 2, squareSize * 1.20 - 2);
+            QRect titleRect(xOffset + 1, yOffset + 1, squareSize * 1.15 - 2, squareSize * 1.15 - 2);
             painter.drawText(titleRect, squareTitles[leftSquareIndex], textOption);
         }
 
         // Draw right column square
-        int xOffsetRight = (topBottomSquares - 1) * squareSize * 1.20;
-        QRect rightSquare(xOffsetRight, yOffset, squareSize * 1.20, squareSize * 1.20);
+        int xOffsetRight = (topBottomSquares - 1) * squareSize * 1.15;
+        QRect rightSquare(xOffsetRight, yOffset, squareSize * 1.15, squareSize * 1.15);
         int rightSquareIndex = topBottomSquares + i;
         drawSquareWithBorder(painter, rightSquare, rightSquareIndex, squareColors.value(rightSquareIndex, Qt::white));
 
         // Draw right square title
         if (rightSquareIndex < squareTitles.size()) {
-            QRect titleRect(xOffsetRight + 1, yOffset + 1, squareSize * 1.20 - 2, squareSize * 1.20 - 2);
+            QRect titleRect(xOffsetRight + 1, yOffset + 1, squareSize * 1.15 - 2, squareSize * 1.15 - 2);
             painter.drawText(titleRect, squareTitles[rightSquareIndex], textOption);
         }
     }
@@ -259,25 +259,25 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
         // Calculate token position based on square index
         if (squareIndex < topBottomSquares) {
             // Top row
-            xOffset = squareIndex * squareSize * 1.20;
+            xOffset = squareIndex * squareSize * 1.15;
             yOffset = 0;
         } else if (squareIndex < topBottomSquares + leftRightSquares) {
             // Right column
-            xOffset = (topBottomSquares - 1) * squareSize * 1.20;
-            yOffset = (squareIndex - topBottomSquares + 1) * squareSize * 1.20;
+            xOffset = (topBottomSquares - 1) * squareSize * 1.15;
+            yOffset = (squareIndex - topBottomSquares + 1) * squareSize * 1.15;
         } else if (squareIndex < 2 * topBottomSquares + leftRightSquares) {
             // Bottom row
             isBottomRow = true;
-            xOffset = (2 * topBottomSquares + leftRightSquares - squareIndex - 1) * squareSize * 1.20;
-            yOffset = (leftRightSquares + 1) * squareSize * 1.20;
+            xOffset = (2 * topBottomSquares + leftRightSquares - squareIndex - 1) * squareSize * 1.15;
+            yOffset = (leftRightSquares + 1) * squareSize * 1.15;
         } else {
             // Left column
             xOffset = 0;
-            yOffset = (2 * topBottomSquares + 2 * leftRightSquares - squareIndex) * squareSize * 1.20;
+            yOffset = (2 * topBottomSquares + 2 * leftRightSquares - squareIndex) * squareSize * 1.15;
         }
 
-        int circleXOffset = xOffset + 5 * 1.20;
-        int circleYOffset = yOffset + 26 * 1.20;
+        int circleXOffset = xOffset + 5 * 1.15;
+        int circleYOffset = yOffset + 26 * 1.15;
 
         // Draw player tokens
         for (int j = 0; j < numPlayers; ++j) {
@@ -292,12 +292,12 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
 
                 // Adjust token position for bottom row
                 if (isBottomRow) {
-                    x = circleXOffset + (1 - col) * (circleRadius + 4) * 1.20;
+                    x = circleXOffset + (1 - col) * (circleRadius + 4) * 1.15;
                 } else {
-                    x = circleXOffset + col * (circleRadius + 4) * 1.20;
+                    x = circleXOffset + col * (circleRadius + 4) * 1.15;
                 }
 
-                y = circleYOffset + row * (circleRadius * 2 + 1) * 1.20;
+                y = circleYOffset + row * (circleRadius * 2 + 1) * 1.15;
                 painter.drawEllipse(QPoint(x, y), circleRadius, circleRadius);
             }
         }
@@ -327,14 +327,14 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
     // Draw top and bottom rows square information
     for (int i = 0; i < topBottomSquares; ++i) {
         // Top row
-        int xOffset = i * squareSize * 1.20;
+        int xOffset = i * squareSize * 1.15;
         int yOffset = 0;
-        QRect topSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        QRect topSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         drawSquareInfo(topSquare, i);
 
         // Bottom row
-        yOffset = (leftRightSquares + 1) * squareSize * 1.20;
-        QRect bottomSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        yOffset = (leftRightSquares + 1) * squareSize * 1.15;
+        QRect bottomSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         int bottomSquareIndex = 2*topBottomSquares + leftRightSquares - i - 1;
         drawSquareInfo(bottomSquare, bottomSquareIndex);
     }
@@ -343,14 +343,14 @@ void CustomWidget::paintEvent(QPaintEvent* event) {
     for (int i = 0; i < leftRightSquares; ++i) {
         // Left column
         int xOffset = 0;
-        int yOffset = (i + 1) * squareSize * 1.20;
-        QRect leftSquare(xOffset, yOffset, squareSize * 1.20, squareSize * 1.20);
+        int yOffset = (i + 1) * squareSize * 1.15;
+        QRect leftSquare(xOffset, yOffset, squareSize * 1.15, squareSize * 1.15);
         int leftSquareIndex = 2 * topBottomSquares + 2 * leftRightSquares - i - 1;
         drawSquareInfo(leftSquare, leftSquareIndex);
 
         // Right column
-        int xOffsetRight = (topBottomSquares - 1) * squareSize * 1.20;
-        QRect rightSquare(xOffsetRight, yOffset, squareSize * 1.20, squareSize * 1.20);
+        int xOffsetRight = (topBottomSquares - 1) * squareSize * 1.15;
+        QRect rightSquare(xOffsetRight, yOffset, squareSize * 1.15, squareSize * 1.15);
         int rightSquareIndex = topBottomSquares + i;
         drawSquareInfo(rightSquare, rightSquareIndex);
     }

@@ -14,7 +14,7 @@ SRC = main.cpp gamehandler.cpp customwidget.cpp Board.cpp Player.cpp Game.cpp Sq
 OBJ = $(SRC:.cpp=.o)
 
 # Executable name
-TARGET = monopoly_app
+TARGET = monopoly
 
 # Test files
 TEST_SRC = monopoly_test.cpp
